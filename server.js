@@ -4,6 +4,17 @@ const v3 = require('node-hue-api').v3;
 const hueApi = v3.api;
 const LightState = v3.lightStates.LightState;
 
+const { createWebhookModule } = require('sipgateio');
+const { connect } = require('http2');
+
+const serverAddress = process.env.SERVER_ADDRESS;
+if (!serverAddress) {
+	console.error(
+		'Please provide a server address via the environment variable SERVER_ADDRESS'
+	);
+	return;
+}
+
 const appName = 'io-labs-hue-integration';
 const deviceName = 'call-light';
 
@@ -77,8 +88,20 @@ const blinkLight = async (api, lightId, duration, count, color) => {
 	}
 };
 
-connectToBridge(ipAddress, port, username)
-	.then((api) => {
-		blinkLight(api, 1, 100, 10, [255, 0, 255]);
-	})
-	.catch(console.error);
+const runServer = async () => {
+	const bridge = await connectToBridge(ipAddress, port, username);
+
+	const webhookServerOptions = {
+		port: process.env.SERVER_PORT || 8080,
+		serverAddress,
+	};
+	const server = await createWebhookModule().createServer(webhookServerOptions);
+	console.log(`Server running at ${webhookServerOptions.serverAddress}`);
+
+	server.onNewCall(async (newCallEvent) => {
+		console.log('got new event: ', newCallEvent);
+		await blinkLight(bridge, 1, 100, 10, [255, 0, 255]);
+	});
+};
+
+runServer();

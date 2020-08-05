@@ -12,6 +12,7 @@
   "dependencies": {
     "eslint": "^7.6.0",
     "node-hue-api": "^4.0.8",
-    "prettier": "^2.0.5"
+    "prettier": "^2.0.5",
+    "sipgateio": "^1.9.3"
   }
 }
