@@ -1,0 +1,17 @@
+{
+  "name": "huebridge",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "eslint": "^7.6.0",
+    "node-hue-api": "^4.0.8",
+    "prettier": "^2.0.5"
+  }
+}

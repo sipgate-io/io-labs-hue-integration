@@ -1,0 +1,45 @@
+{
+	"env": {
+		"node": true
+	},
+	"extends": ["eslint:recommended", "prettier"],
+	"globals": {
+		"Atomics": "readonly",
+		"SharedArrayBuffer": "readonly"
+	},
+	"parserOptions": {
+		"ecmaVersion": 5,
+		"sourceType": "module"
+	},
+	"plugins": ["prettier", "node", "promise", "standard", "autofix"],
+	"rules": {
+		"autofix/no-debugger": "error",
+		"autofix/sort-vars": "error",
+		"camelcase": "warn",
+		"eqeqeq": "error",
+		"no-unused-expressions": "error",
+		"no-unused-labels": "error",
+		"no-unused-vars": "error",
+		"prefer-const": "error",
+		"no-duplicate-imports": "error",
+		"prefer-destructuring": [
+			"error",
+			{
+				"AssignmentExpression": {
+					"array": false,
+					"object": true
+				},
+				"VariableDeclarator": {
+					"array": false,
+					"object": true
+				}
+			},
+			{
+				"enforceForRenamedProperties": false
+			}
+		],
+		"prefer-template": "error",
+		"prettier/prettier": "error",
+		"use-isnan": "error"
+	}
+}
