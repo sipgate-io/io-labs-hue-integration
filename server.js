@@ -5,7 +5,6 @@ const hueApi = v3.api;
 const LightState = v3.lightStates.LightState;
 
 const { createWebhookModule } = require('sipgateio');
-const { connect } = require('http2');
 
 const serverAddress = process.env.SERVER_ADDRESS;
 if (!serverAddress) {
@@ -22,6 +21,12 @@ const ipAddress = 'localhost';
 const port = 8000;
 
 const username = process.env.HUE_USERNAME;
+
+const defaultColor = [255, 0, 0];
+
+const personColors = {
+	'<some phone number>': [255, 0, 255],
+};
 
 const delay = (duration) =>
 	new Promise((resolve) => setTimeout(resolve, duration));
@@ -90,6 +95,7 @@ const blinkLight = async (api, lightId, duration, count, color) => {
 
 const runServer = async () => {
 	const bridge = await connectToBridge(ipAddress, port, username);
+	const allLightIds = await bridge.lights.getAll();
 
 	const webhookServerOptions = {
 		port: process.env.SERVER_PORT || 8080,
@@ -99,8 +105,12 @@ const runServer = async () => {
 	console.log(`Server running at ${webhookServerOptions.serverAddress}`);
 
 	server.onNewCall(async (newCallEvent) => {
-		console.log('got new event: ', newCallEvent);
-		await blinkLight(bridge, 1, 100, 10, [255, 0, 255]);
+		console.log(`incoming call from ${newCallEvent.from}`);
+		const color = personColors[newCallEvent.from] || defaultColor;
+
+		await Promise.all(
+			allLightIds.map((lightId) => blinkLight(bridge, lightId, 200, 10, color))
+		);
 	});
 };
 
