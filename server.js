@@ -1,4 +1,6 @@
-const readline = require('readline');
+var readlineSync = require('readline-sync');
+const path = require('path');
+const fs = require('fs');
 
 const v3 = require('node-hue-api').v3;
 const hueApi = v3.api;
@@ -19,6 +21,7 @@ const deviceName = 'call-light';
 
 const ipAddress = 'localhost';
 const port = 8000;
+const cacheFile = path.resolve(__dirname, '.credentials.json');
 
 const username = process.env.HUE_USERNAME;
 
@@ -27,6 +30,27 @@ const defaultColor = [255, 0, 0];
 const personColors = {
 	'<some phone number>': [255, 0, 255],
 };
+
+let userCredentials = undefined;
+
+if (!fs.existsSync(cacheFile)) {
+	console.log('No existing credentials detected.');
+
+	readlineSync.question(
+		'Please push the Link button on your Hue Bridge and then press enter to proceed >'
+	);
+	createUser()
+		.then((createdUser) => {
+			console.log(`username: ${createdUser.username}`);
+			fs.writeFileSync(cacheFile, JSON.stringify(createdUser));
+		})
+		.catch((err) => {
+			console.error(err.message);
+		});
+}
+
+// TODO: handle non-existent user
+// TODO: Discovery(?)
 
 const delay = (duration) =>
 	new Promise((resolve) => setTimeout(resolve, duration));
@@ -37,38 +61,6 @@ async function createUser() {
 		.connect();
 
 	return await unauthenticatedApi.users.createUser(appName, deviceName);
-}
-
-const performUserCreation = async () => {
-	try {
-		const createdUser = await createUser();
-		console.log(`username: ${createdUser.username}`);
-	} catch (err) {
-		if (err.getHueErrorType && err.getHueErrorType() === 101) {
-			console.error(
-				'The Link button on the bridge was not pressed. Please press the Link button and try again.'
-			);
-		} else {
-			console.error(`Unexpected Error: ${err.message}`);
-		}
-	}
-};
-
-if (!username) {
-	console.log(
-		"The HUE_USERNAME environment variable is not set, please press the light's button and press enter"
-	);
-
-	const rl = readline.createInterface({
-		input: process.stdin,
-		output: process.stdout,
-	});
-	rl.question('> ', async () => {
-		await performUserCreation();
-		rl.close();
-	});
-
-	return;
 }
 
 const connectToBridge = (ip, port, username) => {
