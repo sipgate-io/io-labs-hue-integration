@@ -8,20 +8,11 @@ const LightState = v3.lightStates.LightState;
 
 const { createWebhookModule } = require('sipgateio');
 
-const serverAddress = process.env.SERVER_ADDRESS;
-if (!serverAddress) {
-	console.error(
-		'Please provide a server address via the environment variable SERVER_ADDRESS'
-	);
-	return;
-}
 
 const appName = 'io-labs-hue-integration';
 const deviceName = 'call-light';
 
-const ipAddress = 'localhost';
-const port = 8000;
-const cacheFile = path.resolve(__dirname, '.credentials.json');
+const configFile = path.resolve(__dirname, '.config.json');
 
 const defaultColor = [255, 0, 0];
 
@@ -29,7 +20,18 @@ const personColors = {
 	'<some phone number>': [255, 0, 255],
 };
 
-if (!fs.existsSync(cacheFile)) {
+let configuration;
+
+try {
+	configuration = JSON.parse(fs.readFileSync(configFile).toString());
+} catch (e) {
+	console.error(
+		'Please provide a .config.json file with an ipAddress and port.'
+	);
+	return;
+}
+
+if (!configuration.credentials) {
 	console.log('No existing credentials detected.');
 
 	readlineSync.question(
@@ -38,7 +40,8 @@ if (!fs.existsSync(cacheFile)) {
 	createUser()
 		.then((createdUser) => {
 			console.log(`username: ${createdUser.username}`);
-			fs.writeFileSync(cacheFile, JSON.stringify(createdUser));
+			configuration.credentials = createdUser;
+			fs.writeFileSync(configFile, JSON.stringify(configuration));
 			return createdUser;
 		})
 		.then(runServer)
@@ -46,8 +49,7 @@ if (!fs.existsSync(cacheFile)) {
 			console.error(err.message);
 		});
 } else {
-	const userCredentials = JSON.parse(fs.readFileSync(cacheFile));
-	runServer(userCredentials);
+	runServer(configuration.credentials).catch(console.error);
 }
 
 const delay = (duration) =>
@@ -55,7 +57,7 @@ const delay = (duration) =>
 
 async function createUser() {
 	const unauthenticatedApi = await hueApi
-		.createInsecureLocal(ipAddress, port)
+		.createInsecureLocal(configuration.ipAddress, configuration.port)
 		.connect();
 
 	return await unauthenticatedApi.users.createUser(appName, deviceName);
@@ -87,7 +89,7 @@ async function blinkLight(api, lightId, duration, count, color) {
 async function runServer(userCredentials) {
 	let bridge;
 	try {
-		bridge = await connectToBridge(ipAddress, port, userCredentials);
+		bridge = await connectToBridge(configuration.ipAddress, configuration.port, userCredentials);
 		await bridge.configuration.getConfiguration();
 	} catch (e) {
 		console.error(e.message);
@@ -98,10 +100,10 @@ async function runServer(userCredentials) {
 
 	const webhookServerOptions = {
 		port: process.env.SERVER_PORT || 8080,
-		serverAddress,
+		serverAddress: configuration.webhookURL,
 	};
 	const server = await createWebhookModule().createServer(webhookServerOptions);
-	console.log(`Server running at ${webhookServerOptions.serverAddress}`);
+	console.log(`Server running at ${configuration.webhookURL}`);
 
 	server.onNewCall(async (newCallEvent) => {
 		console.log(`incoming call from ${newCallEvent.from}`);

@@ -1,0 +1,5 @@
+{
+	"ipAddress": "localhost",
+	"port": 8000,
+	"webhookURL": "http://example.com"
+}
