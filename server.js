@@ -31,8 +31,6 @@ const personColors = {
 	'<some phone number>': [255, 0, 255],
 };
 
-let userCredentials = undefined;
-
 if (!fs.existsSync(cacheFile)) {
 	console.log('No existing credentials detected.');
 
@@ -43,10 +41,15 @@ if (!fs.existsSync(cacheFile)) {
 		.then((createdUser) => {
 			console.log(`username: ${createdUser.username}`);
 			fs.writeFileSync(cacheFile, JSON.stringify(createdUser));
+			return createdUser;
 		})
+		.then(runServer)
 		.catch((err) => {
 			console.error(err.message);
 		});
+} else {
+	const userCredentials = JSON.parse(fs.readFileSync(cacheFile));
+	runServer(userCredentials);
 }
 
 // TODO: handle non-existent user
@@ -63,19 +66,20 @@ async function createUser() {
 	return await unauthenticatedApi.users.createUser(appName, deviceName);
 }
 
-const connectToBridge = (ip, port, username) => {
-	return hueApi.createInsecureLocal(ip, port).connect(username);
-};
+function connectToBridge(ip, port, userCredentials) {
+	console.log(userCredentials);
+	return hueApi.createInsecureLocal(ip, port).connect(userCredentials.username);
+}
 
-const turnOff = (api, lightId) => {
+function turnOff(api, lightId) {
 	return api.lights.setLightState(lightId, new LightState().off());
-};
+}
 
-const turnOn = (api, lightId) => {
+function turnOn(api, lightId) {
 	return api.lights.setLightState(lightId, new LightState().on());
-};
+}
 
-const blinkLight = async (api, lightId, duration, count, color) => {
+async function blinkLight(api, lightId, duration, count, color) {
 	await api.lights.setLightState(lightId, new LightState().on().rgb(color));
 	for (let i = 0; i < count; i++) {
 		await turnOn(api, lightId);
@@ -83,10 +87,10 @@ const blinkLight = async (api, lightId, duration, count, color) => {
 		await turnOff(api, lightId);
 		await delay(duration);
 	}
-};
+}
 
-const runServer = async () => {
-	const bridge = await connectToBridge(ipAddress, port, username);
+async function runServer(userCredentials) {
+	const bridge = await connectToBridge(ipAddress, port, userCredentials);
 	const allLightIds = await bridge.lights.getAll();
 
 	const webhookServerOptions = {
@@ -104,6 +108,4 @@ const runServer = async () => {
 			allLightIds.map((lightId) => blinkLight(bridge, lightId, 200, 10, color))
 		);
 	});
-};
-
-runServer();
+}
