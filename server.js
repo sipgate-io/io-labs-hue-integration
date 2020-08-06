@@ -23,8 +23,6 @@ const ipAddress = 'localhost';
 const port = 8000;
 const cacheFile = path.resolve(__dirname, '.credentials.json');
 
-const username = process.env.HUE_USERNAME;
-
 const defaultColor = [255, 0, 0];
 
 const personColors = {
@@ -51,9 +49,6 @@ if (!fs.existsSync(cacheFile)) {
 	const userCredentials = JSON.parse(fs.readFileSync(cacheFile));
 	runServer(userCredentials);
 }
-
-// TODO: handle non-existent user
-// TODO: Discovery(?)
 
 const delay = (duration) =>
 	new Promise((resolve) => setTimeout(resolve, duration));
@@ -90,7 +85,15 @@ async function blinkLight(api, lightId, duration, count, color) {
 }
 
 async function runServer(userCredentials) {
-	const bridge = await connectToBridge(ipAddress, port, userCredentials);
+	let bridge;
+	try {
+		bridge = await connectToBridge(ipAddress, port, userCredentials);
+		await bridge.configuration.getConfiguration();
+	} catch (e) {
+		console.error(e.message);
+		return;
+	}
+
 	const allLightIds = await bridge.lights.getAll();
 
 	const webhookServerOptions = {
