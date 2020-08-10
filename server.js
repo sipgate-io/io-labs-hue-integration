@@ -25,10 +25,23 @@ let configuration;
 try {
 	configuration = JSON.parse(fs.readFileSync(configFile).toString());
 } catch (e) {
-	console.error('Please provide a .config.json file with an bridgeIpAddress and bridgePort.');
+	console.error(
+		'Please provide a .config.json file with an bridgeIpAddress and bridgePort.'
+	);
 	console.error(e);
 	return;
 }
+
+const createUser = async () => {
+	const unauthenticatedApi = await hueApi
+		.createLocal(
+			configuration.bridgeIpAddress,
+			configuration.bridgePort
+		)
+		.connect();
+
+	return await unauthenticatedApi.users.createUser(appName, deviceName);
+};
 
 if (!configuration.credentials) {
 	console.log('No existing credentials detected.');
@@ -54,27 +67,19 @@ if (!configuration.credentials) {
 const delay = (duration) =>
 	new Promise((resolve) => setTimeout(resolve, duration));
 
-async function createUser() {
-	const unauthenticatedApi = await hueApi
-		.createInsecureLocal(configuration.bridgeIpAddress, configuration.bridgePort)
-		.connect();
+const connectToBridge = (ip, port, userCredentials) => {
+	return hueApi.createLocal(ip, port).connect(userCredentials.username);
+};
 
-	return await unauthenticatedApi.users.createUser(appName, deviceName);
-}
-
-function connectToBridge(ip, port, userCredentials) {
-	return hueApi.createInsecureLocal(ip, port).connect(userCredentials.username);
-}
-
-function turnOff(api, lightId) {
+const turnOff = (api, lightId) => {
 	return api.lights.setLightState(lightId, new LightState().off());
-}
+};
 
-function turnOn(api, lightId) {
+const turnOn = (api, lightId) => {
 	return api.lights.setLightState(lightId, new LightState().on());
-}
+};
 
-async function blinkLight(api, lightId, duration, count, color) {
+const blinkLight = async (api, lightId, duration, count, color) => {
 	await api.lights.setLightState(lightId, new LightState().on().rgb(color));
 	for (let i = 0; i < count; i++) {
 		await turnOn(api, lightId);
@@ -82,12 +87,16 @@ async function blinkLight(api, lightId, duration, count, color) {
 		await turnOff(api, lightId);
 		await delay(duration);
 	}
-}
+};
 
 async function runServer(userCredentials) {
 	let bridge;
 	try {
-		bridge = await connectToBridge(configuration.bridgeIpAddress, configuration.bridgePort, userCredentials);
+		bridge = await connectToBridge(
+			configuration.bridgeIpAddress,
+			configuration.bridgePort,
+			userCredentials
+		);
 		await bridge.configuration.getConfiguration();
 	} catch (e) {
 		console.error(e.message);
