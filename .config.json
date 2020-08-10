@@ -1,5 +1,6 @@
 {
-	"ipAddress": "localhost",
-	"port": 8000,
-	"webhookURL": "http://example.com"
+	"bridgeIpAddress": "localhost",
+	"bridgePort": 8000,
+	"webhookURL": "example.com",
+	"webhookPort": 8080
 }

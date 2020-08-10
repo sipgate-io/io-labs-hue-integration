@@ -1,13 +1,13 @@
-var readlineSync = require('readline-sync');
 const path = require('path');
 const fs = require('fs');
+
+const readlineSync = require('readline-sync');
 
 const v3 = require('node-hue-api').v3;
 const hueApi = v3.api;
 const LightState = v3.lightStates.LightState;
 
 const { createWebhookModule } = require('sipgateio');
-
 
 const appName = 'io-labs-hue-integration';
 const deviceName = 'call-light';
@@ -25,9 +25,8 @@ let configuration;
 try {
 	configuration = JSON.parse(fs.readFileSync(configFile).toString());
 } catch (e) {
-	console.error(
-		'Please provide a .config.json file with an ipAddress and port.'
-	);
+	console.error('Please provide a .config.json file with an bridgeIpAddress and bridgePort.');
+	console.error(e);
 	return;
 }
 
@@ -57,14 +56,13 @@ const delay = (duration) =>
 
 async function createUser() {
 	const unauthenticatedApi = await hueApi
-		.createInsecureLocal(configuration.ipAddress, configuration.port)
+		.createInsecureLocal(configuration.bridgeIpAddress, configuration.bridgePort)
 		.connect();
 
 	return await unauthenticatedApi.users.createUser(appName, deviceName);
 }
 
 function connectToBridge(ip, port, userCredentials) {
-	console.log(userCredentials);
 	return hueApi.createInsecureLocal(ip, port).connect(userCredentials.username);
 }
 
@@ -89,7 +87,7 @@ async function blinkLight(api, lightId, duration, count, color) {
 async function runServer(userCredentials) {
 	let bridge;
 	try {
-		bridge = await connectToBridge(configuration.ipAddress, configuration.port, userCredentials);
+		bridge = await connectToBridge(configuration.bridgeIpAddress, configuration.bridgePort, userCredentials);
 		await bridge.configuration.getConfiguration();
 	} catch (e) {
 		console.error(e.message);
@@ -99,7 +97,7 @@ async function runServer(userCredentials) {
 	const allLightIds = await bridge.lights.getAll();
 
 	const webhookServerOptions = {
-		port: process.env.SERVER_PORT || 8080,
+		port: configuration.webhookPort,
 		serverAddress: configuration.webhookURL,
 	};
 	const server = await createWebhookModule().createServer(webhookServerOptions);
