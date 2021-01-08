@@ -14,9 +14,9 @@
     "node-hue-api": "^4.0.8",
     "prettier": "^2.0.5",
     "readline-sync": "^1.4.10",
-    "sipgateio": "^1.9.3"
+    "sipgateio": "^2.1.4"
   },
   "devDependencies": {
-    "eslint-plugin-prettier": "^3.1.4"
+    "eslint-plugin-prettier": "^3.3.1"
   }
 }
