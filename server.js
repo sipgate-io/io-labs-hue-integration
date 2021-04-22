@@ -34,10 +34,7 @@ try {
 
 const createUser = async () => {
 	const unauthenticatedApi = await hueApi
-		.createLocal(
-			configuration.bridgeIpAddress,
-			configuration.bridgePort
-		)
+		.createLocal(configuration.bridgeIpAddress, configuration.bridgePort)
 		.connect();
 
 	return await unauthenticatedApi.users.createUser(appName, deviceName);

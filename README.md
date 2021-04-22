@@ -42,7 +42,7 @@ Create a webhook in your slack control panel. Details can be found in the offici
 Run the application:
 
 ```bash
-SIPGATE_USERNAME=username SIPGATE_PASSWORD=password SLACK_WEBHOOK_URL=https://your.slack.webhook.url npm start
+SLACK_WEBHOOK_URL=https://your.slack.webhook.url npm start
 ```
 
 ## Common Issues

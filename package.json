@@ -11,10 +11,10 @@
   "license": "ISC",
   "dependencies": {
     "eslint": "^7.6.0",
-    "node-hue-api": "^4.0.8",
+    "node-hue-api": "^4.0.10",
     "prettier": "^2.0.5",
     "readline-sync": "^1.4.10",
-    "sipgateio": "^2.1.4"
+    "sipgateio": "^2.2.0"
   },
   "devDependencies": {
     "eslint-plugin-prettier": "^3.3.1"
